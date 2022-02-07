@@ -5,6 +5,52 @@
   <link rel="stylesheet" type="text/css" href="/style.css">
   
   <script>
+    let sendButton;
+    let pageSelect;
+    let typeSelect;
+    let responseStatus;
+    let message;
+
+    function parseResponse(response) {
+      // Callback function for changing promise into text
+      response.text().then((responseText) => {
+        console.log(responseText);
+
+        //Get type of content from response header
+        let contentType = response.headers.get('Content-Type');
+
+        if (contentType === 'text/xml') {
+          //Wow, really cool line from the accept header demo!
+          let parsedXML = new window.DOMParser().parseFromString(responseText, 'text/xml');
+          message.innerHTML = `Message: ${parsedXML.querySelector('message').innerHTML}`;
+        } else { //If not XML, defaults to parsing JSON
+          let parsedJSON = JSON.parse(responseText);
+          message.innerHTML = `Message: ${parsedJSON.message}`;
+        }
+        responseStatus.innerHTML = response.statusText;
+      });
+    }
+
+    async function sendFetchRequest(url, acceptedType) {
+      const options = {
+        method: 'GET',
+        headers: {'Accept': acceptedType},
+      }
+      let responsePromise = await fetch(url, options);
+      parseResponse(responsePromise);
+    }
+
+    const init = () => {
+      sendButton = document.querySelector("#send");
+      pageSelect = document.querySelector("#page");
+      typeSelect = document.querySelector("#type");
+      responseStatus = document.querySelector("#response");
+      message = document.querySelector("#message");
+     
+      sendButton.onclick = () => { sendFetchRequest(pageSelect.value,typeSelect.value); };
+    }
+
+    window.onload = init;
 
   </script>
 </head>
@@ -27,6 +73,8 @@
     <button id="send">Send</button>
   </section>
   <section id="content">
+    <h1 id="response"></h1>
+    <p id="message"></p>
   </section>
 </body>
 </html>
